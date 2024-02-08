@@ -7,7 +7,6 @@ export default function ExportButton({ leadData, reset }) {
   const [isExporting, setIsExporting] = useState(false);
 
   const onExportPostResponse = (res) => {
-    console.log(res);
     if (res.created) {
       toastr.success(
         "Your Google Sheets document has been updated",
@@ -21,9 +20,8 @@ export default function ExportButton({ leadData, reset }) {
     setIsExporting(false);
   };
 
-  //need to move this API KEY to .env file
   const addRowsToGoogleSheet = (rowsData) => {
-    fetch(process.env.REACT_APP_SHEETS_DB_PRIVATE_KEY, {
+    fetch(process.env.REACT_APP_SHEETS_DB_API_URL, {
       method: "POST",
       headers: {
         Accept: "application/json",

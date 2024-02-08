@@ -1,0 +1,29 @@
+#calculation-modal {
+  position: absolute;
+  top: 0;
+  left: 2%;
+  width: fit-content;
+  height: fit-content;
+  margin-top: 10px;
+  padding: 10px;
+  z-index: 99;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 2px 2px 10px black;
+  /* border: 1px solid black; */
+}
+.calculation-input-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.calculation-results {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid blue;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}

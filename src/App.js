@@ -1,25 +1,11 @@
-import React, { useState } from "react";
-import ManualEntryForm from "./components/ManualEntryForm";
-import toastr from "toastr";
-import { Container, Row, Col, Button } from "react-bootstrap";
-import Spinner from "react-bootstrap/Spinner";
-import { autoEntrySchema } from "./schemas/autoEntrySchema";
-import {
-  Formik,
-  Field,
-  Form as FormikForm,
-  ErrorMessage,
-  FieldArray,
-} from "formik";
+import React, { lazy, useState, Suspense } from "react";
+import { Route, Routes, BrowserRouter as Router } from "react-router-dom";
 import PublicNav from "./components/PublicNav";
 import "./App.css";
-import AutoEntryForm from "./components/AutoEntryForm";
-//TODO:
-// [X] create service file to hold all the sheetsDB calls
-// [X] add error handling to the form, should not be able to upload unless test is present
-// [X] add toastr to provide feedback to user
-// [X] clear the form after uploading
-// [X] clear the state after exporting
+
+const AutoEntryForm = lazy(() => import("./views/AutoEntryForm"));
+const ManualEntryForm = lazy(() => import("./views/ManualEntryForm"));
+const GoogleMapView = lazy(() => import("./views/GoogleMapView"));
 
 function App() {
   const [leads, setLeads] = useState([]);
@@ -44,9 +30,22 @@ function App() {
   return (
     <>
       {" "}
-      <PublicNav leadsArr={leads} resetState={resetState}></PublicNav>
-      <AutoEntryForm onUpload={addArrOfLeadsToState} />
-      <ManualEntryForm onUpload={addSingleLeadToState} />
+      <PublicNav leadsArr={leads} resetState={resetState} />
+      <Router>
+        <Suspense>
+          <Routes>
+            <Route
+              path="/"
+              element={<AutoEntryForm onUpload={addArrOfLeadsToState} />}
+            ></Route>
+            <Route
+              path="manual"
+              element={<ManualEntryForm onUpload={addSingleLeadToState} />}
+            ></Route>
+            <Route path="map" element={<GoogleMapView></GoogleMapView>}></Route>
+          </Routes>
+        </Suspense>
+      </Router>
     </>
   );
 }

@@ -9,6 +9,10 @@ import {
 import toastr from "toastr";
 import { autoEntrySchema } from "../schemas/autoEntrySchema";
 import { Container, Row, Col, Button } from "react-bootstrap";
+import axios from "axios";
+
+//TO-DO:
+// implemented the geocode service into this form so that we get lat/lng && neigborhood data from Google Maps
 
 export default function AutoEntryForm({ onUpload }) {
   const LEAD_TYPES = [
@@ -29,32 +33,37 @@ export default function AutoEntryForm({ onUpload }) {
   };
 
   //#region PARSING METHODS
-  const parseLeadTypeOfir = (text, data) => {
+  const parseLeadTypeOfir = async (text, data) => {
     const lines = getSplitLines(text);
 
     const dateTimeLine = lines[2];
     const extractedDate = dateTimeLine.split(",")[2];
 
-    data["Name"] = lines[0];
-    data["Job_Type"] = lines[1];
-    data["Date_Time"] = lines[2];
-    data["Address"] = lines[3];
+    const addressLine = lines[3];
+    const geocodeData = await getGeoCodeData(addressLine);
 
-    const additional = lines.slice(7);
-    let additionalAsStr = "";
-
-    additional.forEach((item) => {
-      additionalAsStr = additionalAsStr + " " + item;
-    });
-    data["Notes"] = additionalAsStr;
+    data.name = lines[0];
+    data.jobType = lines[1];
+    data.time = lines[2];
+    data.location = geocodeData.location;
+    data.latitude = geocodeData.latitude;
+    data.longitude = geocodeData.longitude;
+    data.address = geocodeData.fullAddress;
   };
-  const parseLeadTypeMikey = (text, data) => {
+  const parseLeadTypeMikey = async (text, data) => {
     const lines = getSplitLines(text);
 
-    data["Name"] = lines[0];
-    data["Job_Type"] = cleanJobType(lines[4]);
-    data["Date_Time"] = lines[2];
-    data["Address"] = lines[3];
+    const addressLine = lines[3];
+
+    const geocodeData = await getGeoCodeData(addressLine); // fetch the data for this address
+
+    data.name = lines[0];
+    data.jobType = cleanJobType(lines[4]);
+    data.time = lines[2];
+    data.location = geocodeData.location;
+    data.latitude = geocodeData.latitude;
+    data.longitude = geocodeData.longitude;
+    data.address = geocodeData.fullAddress;
 
     function cleanJobType(jobTypeStr) {
       const pieces = jobTypeStr.split("-");
@@ -62,8 +71,11 @@ export default function AutoEntryForm({ onUpload }) {
       return trimmed;
     }
   };
-  const parseLeadTypeCjc = (text, data) => {
+
+  const parseLeadTypeCjc = async (text, data) => {
     const lines = getSplitLines(text);
+    let addressFromLead = "";
+    let geocodeData = null;
 
     lines.forEach((line) => {
       const [key, value] = line
@@ -75,48 +87,103 @@ export default function AutoEntryForm({ onUpload }) {
         .map((part) => part.trim());
       switch (key) {
         case "Name":
-          data["Name"] = value;
+          data.name = value;
           break;
         case "Address":
-          data["Address"] = value;
-          break;
-        case "Date/Day":
-          data["Date_Time"] = data["Date_Time"] + value;
+          addressFromLead = value;
           break;
         case "Time":
-          data["Date_Time"] = value;
+          data.time = value;
           break;
         case "House size":
         case "Furnace":
-          data["Job_Type"] = value + " ";
+          data.jobType = value + " ";
           break;
         default:
-          data["Notes"] = value || null;
           break;
       }
     });
+
+    if (addressFromLead) {
+      geocodeData = await getGeoCodeData(addressFromLead);
+      data.location = geocodeData.location;
+      data.latitude = geocodeData.latitude;
+      data.longitude = geocodeData.longitude;
+      data.address = geocodeData.fullAddress;
+    }
   };
-  const parseLeadTypeVicMarket = (text, data) => {
+  const parseLeadTypeVicMarket = async (text, data) => {
     const lines = getSplitLines(text); // splits all the lines
     const filteredLines = lines.filter((ln) => ln !== ""); //remove the empty lines
 
     const extractedName = filteredLines[3].split(" ")[0];
+    const addressLine = filteredLines[4];
+
+    const geocodeData = await getGeoCodeData(addressLine); // fetch the data for this address
+    // console.log("geocodeData ---- ", geocodeData);
 
     const dateTimeLine = filteredLines[2].split(" "); //["01/15/2024", "4:00", "PM"]
     const extractedTime = dateTimeLine[1] + " " + dateTimeLine[2];
 
-    const notesLines = filteredLines[filteredLines.length - 1];
-    const extractedNotes = notesLines.split(":")[1].trim();
+    data.name = extractedName;
+    data.jobType = filteredLines[5];
+    data.time = extractedTime;
+    data.location = geocodeData.location;
+    data.latitude = geocodeData.latitude;
+    data.longitude = geocodeData.longitude;
+    data.address = geocodeData.fullAddress;
 
-    data["Name"] = extractedName;
-    data["Address"] = filteredLines[4];
-    data["Date_Time"] = filteredLines[2];
-    data["Job_Type"] = filteredLines[5];
-    data["Notes"] = extractedNotes;
+    console.log("parseLeadTypeVicMarket data --- ", data);
   };
 
   //#endregion
   //#region UTILITY
+
+  // "getGeoCodeData" accepts an address string, makes Google geocode HTTP request, extracts LAT, LNG and Neighborhood data, then return that data
+  const getGeoCodeData = async (addressStr) => {
+    let results = {};
+    try {
+      const splitAddress = addressStr.split(" ");
+      const formattedAddress = splitAddress.join("+");
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=${process.env.REACT_APP_GOOGLE_MAPS_PLATFORM_KEY}`;
+      const response = await axios.get(url);
+      const data = response.data.results[0];
+      results = await formatGeoCodeData(data);
+    } catch (err) {
+      console.error(err);
+    }
+
+    return results;
+  };
+  // "formatGeoCodeData" will accept the data from Google Geocode HTTP request and return the lat, lng and neigborhood
+  const formatGeoCodeData = (rawData) => {
+    const locationData = rawData.geometry.location;
+    const addressData = rawData.address_components;
+    const filterLocality = addressData.filter((a) =>
+      a.types.includes("locality")
+    );
+
+    const filterNeighborhood = rawData.address_components.filter((a) =>
+      a.types.includes("neighborhood")
+    );
+
+    let locationName = "Could not find locality";
+
+    if (filterNeighborhood.length > 0) {
+      locationName = filterNeighborhood[0].long_name;
+    }
+    if (filterLocality.length > 0) {
+      locationName = filterLocality[0].long_name;
+    }
+
+    const location = locationName;
+    const latitude = locationData.lat.toString();
+    const longitude = locationData.lng.toString();
+    const fullAddress = rawData.formatted_address;
+
+    return { latitude, longitude, location, fullAddress };
+  };
+
   const mapLeadGenOptions = (leadGen) => {
     return (
       <option value={leadGen.id} key={leadGen.id}>
@@ -133,27 +200,27 @@ export default function AutoEntryForm({ onUpload }) {
     const leadSourceName = LEAD_TYPES.filter((t) => t.id === type)[0].label;
 
     const leadDetails = {
-      Name: "",
-      Job_Type: "",
-      Address: "",
-      Date_Time: "",
-      Lead_Source: leadSourceName, // this will come from the type
-      Notes: null,
+      name: "",
+      jobType: "",
+      time: "",
+      location: "",
+      leadSource: leadSourceName, // this will come from the type
+      latitude: "",
+      longitude: "",
+      address: "",
     };
 
     if (type === 1) {
-      parseLeadTypeOfir(trimmedInput, leadDetails); //OFIR
+      parseLeadTypeOfir(trimmedInput, leadDetails); //OFIR [geocode added]
     } else if (type === 2) {
-      parseLeadTypeMikey(trimmedInput, leadDetails); //MIKEY
+      parseLeadTypeMikey(trimmedInput, leadDetails); //MIKEY [geocode added]
     } else if (type === 3) {
       console.log("not implemented");
     } else if (type === 4) {
-      parseLeadTypeCjc(trimmedInput, leadDetails); //CJC
+      parseLeadTypeCjc(trimmedInput, leadDetails); //CJC [geocode added]
     } else if (type === 5) {
-      parseLeadTypeVicMarket(trimmedInput, leadDetails); //Victor's Marketing
+      parseLeadTypeVicMarket(trimmedInput, leadDetails); //Victor's Marketing [geocode added]
     }
-    // const jsonString = JSON.stringify(leadDetails, null, 2);
-    // console.log("FINAL JSON >>>>> ", jsonString);
 
     return leadDetails;
   };
@@ -167,11 +234,6 @@ export default function AutoEntryForm({ onUpload }) {
       });
 
       onUpload(parsedLeads);
-
-      //   setLeads((prevState) => {
-      //     let ns = [...prevState, ...parsedLeads];
-      //     return ns;
-      //   },
     } catch (err) {
       console.error("handleLeadsUpload ::: ", err);
       toastr.error(
