@@ -2,11 +2,12 @@ import React from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { Formik, Field, Form as FormikForm, ErrorMessage } from "formik";
 import { manualEntrySchema } from "../schemas/manualEntryShema";
-
+import { generateUniqueId } from "../utils/utilityFunctions";
 import AddressAutocomplete from "../components/AddressAutocomplete";
 
 export default function ManualEntryForm({ onUpload }) {
   const INITIAL_VALUES = {
+    id: generateUniqueId(),
     name: "",
     jobType: "",
     time: "",

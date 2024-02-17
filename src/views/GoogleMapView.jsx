@@ -5,7 +5,8 @@ import {
   useJsApiLoader,
   InfoWindowF,
 } from "@react-google-maps/api";
-import CalculationModal from "../components/CalculationModal";
+import { Container } from "react-bootstrap";
+//import CalculationModal from "../components/CalculationModal";
 
 const libraries = ["geocoding", "places", "marker"];
 const center = { lat: 34.2505334, lng: -118.548408 };
@@ -19,12 +20,24 @@ export default function GoogleMapView() {
     libraries,
   });
 
-  const fetchData = async () => {
-    await fetch(
-      `${process.env.REACT_APP_SHEETS_DB_API_URL}?cast_numbers=latitude,longitude`
-    )
+  // const fetchData = async () => {
+  //   await fetch(
+  //     `${process.env.REACT_APP_SHEETS_DB_API_URL}?cast_numbers=latitude,longitude`
+  //   )
+  //     .then((response) => response.json())
+  //     .then((data) => setMarkers(data));
+  // };
+
+  const fetchMapData = () => {
+    fetch(`${process.env.REACT_APP_BEST_SHEET_API_URL}?_raw=1`)
       .then((response) => response.json())
-      .then((data) => setMarkers(data));
+      .then((data) => {
+        console.log(data);
+        setMarkers(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   const mapMarkers = (data) => {
@@ -39,20 +52,31 @@ export default function GoogleMapView() {
         key={`Map_Marker_${data.id}`}
         position={markerPosition}
         title={data.id}
-        // label={data.id}
         onClick={() => setActiveMarker(data.id)}
       >
         {activeMarker === data.id ? (
           <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
-            <ul>
-              <li>
-                Client name: <b>{data.name}</b>
-              </li>
-              <li>Time: {data.time}</li>
-              <li>Location: {data.location}</li>
-              <li>Service: {data.jobType}</li>
-              <li>Lead Source: {data.leadSource}</li>
-            </ul>
+            <div>
+              {" "}
+              <h6>{data.name}</h6>
+              <ul>
+                <li>
+                  Time: <b>{data.time}</b>
+                </li>
+                <li>
+                  Location: <b>{data.location}</b>{" "}
+                </li>
+                <li>
+                  Service: <b>{data.jobType}</b>{" "}
+                </li>
+                <li>
+                  Address: <b>{data.address}</b>
+                </li>
+                <li>
+                  Lead Source: <b>{data.leadSource}</b>
+                </li>
+              </ul>
+            </div>
           </InfoWindowF>
         ) : null}
       </Marker>
@@ -60,40 +84,41 @@ export default function GoogleMapView() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchMapData();
   }, []);
 
   if (!isLoaded) {
     return (
-      <div className="container">
+      <Container>
         <div
           className="d-flex align-items-center justify-content-center"
           style={{ height: "90vH" }}
         >
           <h1>Map is Loading...</h1>
         </div>
-      </div>
+      </Container>
     );
   }
   return (
     <>
       {" "}
-      <div className="container-fluid">
+      <Container fluid>
         <div className="wrapper" style={{ position: "relative" }}>
           <div id="google-map" className="d-flex justify-content-center">
             <GoogleMap
               center={center}
               zoom={7}
-              mapContainerStyle={{ height: "90vH", width: "100%" }}
+              mapContainerStyle={{ height: "93vH", width: "100%" }}
               onLoad={(map) => setMap(map)}
               options={{ mapTypeControl: false }}
             >
+              {" "}
               {markers?.map(mapMarkers)}
             </GoogleMap>
           </div>
-          <CalculationModal></CalculationModal>
+          {/* <CalculationModal></CalculationModal> */}
         </div>
-      </div>
+      </Container>
     </>
   );
 }

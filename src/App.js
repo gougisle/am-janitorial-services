@@ -1,6 +1,7 @@
-import React, { lazy, useState, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { Route, Routes, BrowserRouter as Router } from "react-router-dom";
 import PublicNav from "./components/PublicNav";
+import { Button } from "react-bootstrap";
 import "./App.css";
 
 const AutoEntryForm = lazy(() => import("./views/AutoEntryForm"));
@@ -8,29 +9,50 @@ const ManualEntryForm = lazy(() => import("./views/ManualEntryForm"));
 const GoogleMapView = lazy(() => import("./views/GoogleMapView"));
 
 function App() {
-  const [leads, setLeads] = useState([]);
+  //REMOVE the state later
 
   const addSingleLeadToState = (singleLead) => {
-    setLeads((prevState) => {
-      let ns = [...prevState, singleLead];
-      return ns;
-    });
+    let newLeadsArr = [];
+
+    const storedLeads = getLeadsFromStorage();
+
+    if (storedLeads && storedLeads.length > 0) {
+      newLeadsArr = [...storedLeads];
+      newLeadsArr.push(singleLead);
+    } else {
+      newLeadsArr.push(singleLead);
+    }
+    window.sessionStorage.setItem("currentLeads", JSON.stringify(newLeadsArr));
   };
 
   const addArrOfLeadsToState = (arrOfLeads) => {
-    setLeads((prevState) => {
-      let ns = [...prevState, ...arrOfLeads];
-      return ns;
-    });
+    let newLeadsArr = [];
+
+    const storedLeads = getLeadsFromStorage();
+
+    if (storedLeads && storedLeads.length > 0) {
+      newLeadsArr = [...storedLeads, ...arrOfLeads];
+    } else {
+      newLeadsArr = [...arrOfLeads];
+    }
+
+    window.sessionStorage.setItem("currentLeads", JSON.stringify(newLeadsArr));
   };
 
-  const resetState = () => {
-    setLeads([]);
+  const getLeadsFromStorage = () => {
+    const leadsFromStorage = window.sessionStorage.getItem("currentLeads");
+    if (leadsFromStorage) {
+      console.log(JSON.parse(leadsFromStorage));
+      return JSON.parse(leadsFromStorage);
+    } else {
+      console.log("No leads in storage");
+      return null;
+    }
   };
   return (
     <>
       {" "}
-      <PublicNav leadsArr={leads} resetState={resetState} />
+      <PublicNav />
       <Router>
         <Suspense>
           <Routes>

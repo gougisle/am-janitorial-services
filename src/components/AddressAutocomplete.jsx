@@ -20,10 +20,6 @@ export default function AddressAutocomplete() {
       const lat = newPlace.geometry.location.lat();
       const long = newPlace.geometry.location.lng();
       const locality = getLocality(newPlace);
-      //KEY COORDs : 34.2505486, -118.5481286
-      //             34.2505334  -118.548408
-      console.log("latitude???", lat);
-      //setPlace(newPlace);
       setFieldValue("address", fullAddress);
       setFieldValue("latitude", lat);
       setFieldValue("longitude", long);

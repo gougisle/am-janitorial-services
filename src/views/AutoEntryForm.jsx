@@ -9,6 +9,7 @@ import {
 import toastr from "toastr";
 import { autoEntrySchema } from "../schemas/autoEntrySchema";
 import { Container, Row, Col, Button } from "react-bootstrap";
+import { generateUniqueId } from "../utils/utilityFunctions";
 import axios from "axios";
 
 //TO-DO:
@@ -33,46 +34,75 @@ export default function AutoEntryForm({ onUpload }) {
   };
 
   //#region PARSING METHODS
-  const parseLeadTypeOfir = async (text, data) => {
+  const parseLeadTypeOfir = async (text, rawShape) => {
+    let resultData = { ...rawShape };
     const lines = getSplitLines(text);
 
-    const dateTimeLine = lines[2];
-    const extractedDate = dateTimeLine.split(",")[2];
+    const dateTimePieces = lines[2].split(","); //["January 16"," 2024"," 8:00 am"]
+
+    const splitStartTime = dateTimePieces[2].trim().split(" "); //["8:00", "am"]
+    const timeContext = splitStartTime[1].toUpperCase(); // "AM"
+    const hourStart = Number(splitStartTime[0].split(":")[0]) || null; // 8 || null
+
+    let hourEnd = null;
+
+    if (hourStart !== null) {
+      if (hourStart === 12) {
+        hourEnd = 2;
+      } else {
+        hourEnd = hourStart + 2;
+      }
+    }
+
+    const timeBlock = `${hourStart} ${timeContext} - ${hourEnd} ${
+      hourEnd === 12 ? "PM" : timeContext
+    }`;
 
     const addressLine = lines[3];
     const geocodeData = await getGeoCodeData(addressLine);
 
-    data.name = lines[0];
-    data.jobType = lines[1];
-    data.time = lines[2];
-    data.location = geocodeData.location;
-    data.latitude = geocodeData.latitude;
-    data.longitude = geocodeData.longitude;
-    data.address = geocodeData.fullAddress;
+    resultData.name = lines[0];
+    resultData.jobType = lines[1];
+    resultData.time = timeBlock;
+    resultData.location = geocodeData.location;
+    resultData.latitude = geocodeData.latitude;
+    resultData.longitude = geocodeData.longitude;
+    resultData.address = geocodeData.fullAddress;
+    console.log("parseLeadTypeOfir data --- ", resultData);
+    return resultData;
   };
-  const parseLeadTypeMikey = async (text, data) => {
+  const parseLeadTypeMikey = async (text, rawShape) => {
+    let resultData = { ...rawShape };
     const lines = getSplitLines(text);
 
     const addressLine = lines[3];
-
     const geocodeData = await getGeoCodeData(addressLine); // fetch the data for this address
 
-    data.name = lines[0];
-    data.jobType = cleanJobType(lines[4]);
-    data.time = lines[2];
-    data.location = geocodeData.location;
-    data.latitude = geocodeData.latitude;
-    data.longitude = geocodeData.longitude;
-    data.address = geocodeData.fullAddress;
+    const dateTimeStr = lines[2]; // "Tue Jan 16th 2:00 PM - 4:00 PM"
+    const splitDateTime = dateTimeStr.split("-"); // ["Tue Jan 16th 2:00 PM ", " 4:00 PM"]
+    const hourStart = splitDateTime[1].trim();
+    const hourEnd = splitDateTime[0].trim().substring(12);
+
+    const timeBlock = `${hourStart} - ${hourEnd}`;
+
+    resultData.name = lines[0];
+    resultData.jobType = cleanJobType(lines[4]);
+    resultData.time = timeBlock;
+    resultData.location = geocodeData.location;
+    resultData.latitude = geocodeData.latitude;
+    resultData.longitude = geocodeData.longitude;
+    resultData.address = geocodeData.fullAddress;
 
     function cleanJobType(jobTypeStr) {
       const pieces = jobTypeStr.split("-");
       const trimmed = pieces[1].trim();
       return trimmed;
     }
+    console.log("parseLeadTypeMikey data --- ", resultData);
+    return resultData;
   };
-
-  const parseLeadTypeCjc = async (text, data) => {
+  const parseLeadTypeCjc = async (text, rawShape) => {
+    let resultData = { ...rawShape };
     const lines = getSplitLines(text);
     let addressFromLead = "";
     let geocodeData = null;
@@ -87,17 +117,17 @@ export default function AutoEntryForm({ onUpload }) {
         .map((part) => part.trim());
       switch (key) {
         case "Name":
-          data.name = value;
+          resultData.name = value;
           break;
         case "Address":
           addressFromLead = value;
           break;
         case "Time":
-          data.time = value;
+          resultData.time = value;
           break;
         case "House size":
         case "Furnace":
-          data.jobType = value + " ";
+          resultData.jobType = value + " ";
           break;
         default:
           break;
@@ -106,13 +136,16 @@ export default function AutoEntryForm({ onUpload }) {
 
     if (addressFromLead) {
       geocodeData = await getGeoCodeData(addressFromLead);
-      data.location = geocodeData.location;
-      data.latitude = geocodeData.latitude;
-      data.longitude = geocodeData.longitude;
-      data.address = geocodeData.fullAddress;
+      resultData.location = geocodeData.location;
+      resultData.latitude = geocodeData.latitude;
+      resultData.longitude = geocodeData.longitude;
+      resultData.address = geocodeData.fullAddress;
     }
+    console.log("parseLeadTypeCjc data --- ", resultData);
+    return resultData;
   };
-  const parseLeadTypeVicMarket = async (text, data) => {
+  const parseLeadTypeVicMarket = async (text, rawShape) => {
+    let resultData = { ...rawShape };
     const lines = getSplitLines(text); // splits all the lines
     const filteredLines = lines.filter((ln) => ln !== ""); //remove the empty lines
 
@@ -120,20 +153,36 @@ export default function AutoEntryForm({ onUpload }) {
     const addressLine = filteredLines[4];
 
     const geocodeData = await getGeoCodeData(addressLine); // fetch the data for this address
-    // console.log("geocodeData ---- ", geocodeData);
 
     const dateTimeLine = filteredLines[2].split(" "); //["01/15/2024", "4:00", "PM"]
-    const extractedTime = dateTimeLine[1] + " " + dateTimeLine[2];
 
-    data.name = extractedName;
-    data.jobType = filteredLines[5];
-    data.time = extractedTime;
-    data.location = geocodeData.location;
-    data.latitude = geocodeData.latitude;
-    data.longitude = geocodeData.longitude;
-    data.address = geocodeData.fullAddress;
+    const timeContext = dateTimeLine[2]; //AM or PM
+    const hourStart = Number(dateTimeLine[1].split(":")[0]) || null; // --> ["4", "00"] --(w/ index [0])--> "4"
 
-    console.log("parseLeadTypeVicMarket data --- ", data);
+    let hourEnd = null;
+
+    if (hourStart !== null) {
+      if (hourStart === 12) {
+        hourEnd = 2;
+      } else {
+        hourEnd = hourStart + 2;
+      }
+    }
+
+    const timeBlock = `${hourStart} ${timeContext} - ${hourEnd} ${
+      hourEnd === 12 ? "PM" : timeContext
+    }`;
+
+    resultData.name = extractedName;
+    resultData.jobType = filteredLines[5];
+    resultData.time = timeBlock;
+    resultData.location = geocodeData.location;
+    resultData.latitude = geocodeData.latitude;
+    resultData.longitude = geocodeData.longitude;
+    resultData.address = geocodeData.fullAddress;
+
+    console.log("parseLeadTypeVicMarket data --- ", resultData);
+    return resultData;
   };
 
   //#endregion
@@ -195,11 +244,12 @@ export default function AutoEntryForm({ onUpload }) {
     return text.split("\n");
   };
   //#endregion
-  const parseLeadByType = (text, type) => {
+
+  const parseLeadByType = async (text, type) => {
     const trimmedInput = text.trim();
     const leadSourceName = LEAD_TYPES.filter((t) => t.id === type)[0].label;
-
-    const leadDetails = {
+    const initialValues = {
+      id: generateUniqueId(),
       name: "",
       jobType: "",
       time: "",
@@ -210,37 +260,35 @@ export default function AutoEntryForm({ onUpload }) {
       address: "",
     };
 
+    let results;
+
     if (type === 1) {
-      parseLeadTypeOfir(trimmedInput, leadDetails); //OFIR [geocode added]
+      results = parseLeadTypeOfir(trimmedInput, initialValues); //OFIR [geocode added]
     } else if (type === 2) {
-      parseLeadTypeMikey(trimmedInput, leadDetails); //MIKEY [geocode added]
+      results = parseLeadTypeMikey(trimmedInput, initialValues); //MIKEY [geocode added]
     } else if (type === 3) {
       console.log("not implemented");
     } else if (type === 4) {
-      parseLeadTypeCjc(trimmedInput, leadDetails); //CJC [geocode added]
+      results = parseLeadTypeCjc(trimmedInput, initialValues); //CJC [geocode added]
     } else if (type === 5) {
-      parseLeadTypeVicMarket(trimmedInput, leadDetails); //Victor's Marketing [geocode added]
+      results = await parseLeadTypeVicMarket(trimmedInput, initialValues); //Victor's Marketing [geocode added]
     }
 
-    return leadDetails;
+    console.log("after going thru parsing methods --- ", results);
+    return results;
   };
   const handleLeadsUpload = async (values) => {
     const leadGenSourceId = Number(values.leadSource);
     const arrayOfLeads = values.leads;
 
-    try {
-      const parsedLeads = arrayOfLeads.map((lead) => {
-        return parseLeadByType(lead.text, leadGenSourceId);
-      });
+    let results = [];
 
-      onUpload(parsedLeads);
-    } catch (err) {
-      console.error("handleLeadsUpload ::: ", err);
-      toastr.error(
-        "Something went wrong while uploading, please refresh and try again",
-        "Could Not Upload"
-      );
+    for (let index = 0; index < arrayOfLeads.length; index++) {
+      const element = arrayOfLeads[index];
+      const parsedLead = await parseLeadByType(element.text, leadGenSourceId);
+      results.push(parsedLead);
     }
+    onUpload(results);
   };
 
   return (
@@ -257,12 +305,8 @@ export default function AutoEntryForm({ onUpload }) {
             <Row className="lead-source-select-row mb-3">
               {/* SELECT / UPLOAD / RESET */}
               <Col className="d-flex gap-2">
-                <div>
-                  <Field
-                    className="form-control w-100 "
-                    as="select"
-                    name="leadSource"
-                  >
+                <div className="w-50">
+                  <Field className="form-control" as="select" name="leadSource">
                     {LEAD_TYPES.map(mapLeadGenOptions)}
                   </Field>{" "}
                   <div className="error-text">
@@ -273,14 +317,16 @@ export default function AutoEntryForm({ onUpload }) {
                     ></ErrorMessage>
                   </div>
                 </div>
-                <div>
-                  <Button variant="success" type="submit" className="w-100">
+              </Col>
+              <Col className="d-flex gap-2">
+                <div className="w-100">
+                  <Button className="w-100" variant="success" type="submit">
                     Upload
                   </Button>
                 </div>
-                <div>
-                  {" "}
+                <div className="w-100">
                   <Button
+                    className="w-100"
                     type="button"
                     variant="outline-secondary"
                     onClick={handleReset}

@@ -2,49 +2,59 @@ import React, { useState } from "react";
 import { Button } from "react-bootstrap";
 import Spinner from "react-bootstrap/Spinner";
 import toastr from "toastr";
+import { getLeadsFromStorage } from "../utils/utilityFunctions";
 
 export default function ExportButton({ leadData, reset }) {
   const [isExporting, setIsExporting] = useState(false);
 
+  const currentLeads = getLeadsFromStorage();
+
   const onExportPostResponse = (res) => {
-    if (res.created) {
-      toastr.success(
-        "Your Google Sheets document has been updated",
-        "Export Successful"
-      );
-      reset();
-    }
-    if (res.error) {
-      toastr.error("Fail");
-    }
+    console.log("Exported the follwing: ", res);
+    toastr.success(
+      "Your Google Sheets document has been updated",
+      "Export Successful"
+    );
+    clearLeadsFromStorage();
     setIsExporting(false);
   };
 
-  const addRowsToGoogleSheet = (rowsData) => {
-    fetch(process.env.REACT_APP_SHEETS_DB_API_URL, {
+  const clearLeadsFromStorage = () => {
+    window.sessionStorage.setItem("currentLeads", "");
+  };
+
+  const addRowsToGoogleSheetV2 = (rowsData) => {
+    fetch(process.env.REACT_APP_BEST_SHEET_API_URL, {
       method: "POST",
+      mode: "cors",
       headers: {
-        Accept: "application/json",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        data: rowsData,
-      }),
+      body: JSON.stringify(rowsData),
     })
-      .then((response) => response.json())
-      .then(onExportPostResponse);
+      .then((r) => r.json())
+      .then((data) => {
+        // The response comes here
+        onExportPostResponse(data);
+        console.log(data);
+      })
+      .catch((error) => {
+        // Errors are reported there
+        toastr.error("Unable to Export data", "Error");
+        console.log(error);
+      });
   };
 
   const handleExport = () => {
     setIsExporting(true);
-    addRowsToGoogleSheet(leadData);
+    addRowsToGoogleSheetV2(currentLeads);
   };
 
   return (
     <>
       {" "}
       <Button
-        disabled={leadData.length < 1}
+        disabled={!currentLeads}
         className="btn btn-warning w-100"
         type="button"
         onClick={handleExport}
@@ -53,7 +63,7 @@ export default function ExportButton({ leadData, reset }) {
         {isExporting ? (
           <Spinner animation="border" size="sm" />
         ) : (
-          <span>Export to Google Sheets ({leadData.length})</span>
+          <span>Export to Google Sheets ({currentLeads?.length || 0})</span>
         )}
       </Button>
     </>
