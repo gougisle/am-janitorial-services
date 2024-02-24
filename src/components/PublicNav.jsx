@@ -1,6 +1,5 @@
 import React from "react";
 import Container from "react-bootstrap/Container";
-// import Button from "react-bootstrap/Button";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
 import ExportButton from "./ExportButton";
@@ -19,6 +18,7 @@ function PublicNav() {
               <NavLink href="/">Auto Entry</NavLink>
               <NavLink href="/manual">Manual Entry</NavLink>
               <NavLink href="/map">Map</NavLink>
+              <NavLink href="/">Map</NavLink>
             </Nav>
             <Nav className="justify-content-between gap-2">
               <NavItem>

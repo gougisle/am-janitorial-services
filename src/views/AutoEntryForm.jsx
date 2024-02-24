@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Formik,
   Field,
@@ -6,24 +6,37 @@ import {
   ErrorMessage,
   FieldArray,
 } from "formik";
-import toastr from "toastr";
+import { LeadStoreContext } from "../App";
 import { autoEntrySchema } from "../schemas/autoEntrySchema";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import { generateUniqueId } from "../utils/utilityFunctions";
 import axios from "axios";
+import {
+  LEAD_SOURCES,
+  AUTO_GEN_LEAD_SOURCE_IDS,
+  AUTO_LEAD_GEN_TYPES,
+  SERVICES_ARRAY,
+} from "../utils/constants";
 
 //TO-DO:
 // implemented the geocode service into this form so that we get lat/lng && neigborhood data from Google Maps
 
-export default function AutoEntryForm({ onUpload }) {
-  const LEAD_TYPES = [
-    { id: 0, label: "Select a Lead Source" },
-    { id: 1, label: "OFIR" }, // V1
-    { id: 2, label: "MIKEY" }, //V1
-    //{ id: 3, label: "BEN *(do not use)" }, //needs work
-    { id: 4, label: "CJC" }, //V1
-    { id: 5, label: "Victor's Marketing" }, //V1
-  ];
+export default function AutoEntryForm() {
+  const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
+
+  // const LEAD_TYPES = [
+  //   { id: 0, label: "Select a Lead Source" },
+  //   { id: 1, label: "OFIR" }, // V1
+  //   { id: 2, label: "MIKEY" }, //V1
+  //   { id: 4, label: "CJC" }, //V1
+  //   { id: 5, label: "Victor's Marketing" }, //V1
+  // ];
+
+  const leadSourceOptions = LEAD_SOURCES.filter((source) =>
+    AUTO_GEN_LEAD_SOURCE_IDS.includes(source.id)
+  );
+
+  //console.log("Approved auto sources: ", leadSourceOptions);
   const INITIAL_VALUES = {
     leadSource: 0,
     leads: [
@@ -60,6 +73,8 @@ export default function AutoEntryForm({ onUpload }) {
 
     const addressLine = lines[3];
     const geocodeData = await getGeoCodeData(addressLine);
+
+    findService(lines[1]);
 
     resultData.name = lines[0];
     resultData.jobType = lines[1];
@@ -184,11 +199,12 @@ export default function AutoEntryForm({ onUpload }) {
     console.log("parseLeadTypeVicMarket data --- ", resultData);
     return resultData;
   };
-
   //#endregion
+
   //#region UTILITY
 
   // "getGeoCodeData" accepts an address string, makes Google geocode HTTP request, extracts LAT, LNG and Neighborhood data, then return that data
+
   const getGeoCodeData = async (addressStr) => {
     let results = {};
     try {
@@ -233,28 +249,72 @@ export default function AutoEntryForm({ onUpload }) {
     return { latitude, longitude, location, fullAddress };
   };
 
-  const mapLeadGenOptions = (leadGen) => {
+  const mapLeadGenOptions = (leadSource) => {
     return (
-      <option value={leadGen.id} key={leadGen.id}>
-        {leadGen.label}
+      <option value={leadSource.id} key={leadSource.id}>
+        {leadSource.name} - {leadSource.shortName}
       </option>
     );
   };
   const getSplitLines = (text) => {
     return text.split("\n");
   };
+
+  const findServiceV2 = (text) => {
+    const found = [];
+
+    for (const service of SERVICES_ARRAY) {
+      const serviceNameRegex = new RegExp(service.name, "gi");
+      if (text.match(serviceNameRegex)) {
+        found.push(service);
+      }
+    }
+    return found;
+  };
+
+  const findService = (text) => {
+    //TODO need to accound for multiple cleaning tasks (i.e. "tile, rug, chimney cleaning")
+    const lowerCaseText = text.toLowerCase();
+    let serviceRequests = [];
+    let categories = new Map();
+
+    SERVICES_ARRAY.forEach((service) => {
+      const serviceCategory = service.name.split(" ")[0].toLowerCase();
+
+      if (lowerCaseText.includes(serviceCategory)) {
+        if (categories[serviceCategory]) {
+          const newItems = categories[serviceCategory];
+
+          newItems.push(service);
+          categories.set(serviceCategory, newItems);
+        } else {
+          categories[serviceCategory] = [service];
+        }
+      }
+      ////////
+      if (lowerCaseText.includes(service.name.toLowerCase())) {
+        serviceRequests.push(service.code);
+      }
+    });
+
+    console.log("serviceRequests --- ", serviceRequests);
+    console.log("categories ---", categories);
+  };
   //#endregion
 
-  const parseLeadByType = async (text, type) => {
+  const parseLeadByType = async (text, leadSourceId) => {
     const trimmedInput = text.trim();
-    const leadSourceName = LEAD_TYPES.filter((t) => t.id === type)[0].label;
+
+    const seletedLeadSource = leadSourceOptions.filter(
+      (option) => Number(option.id) === Number(leadSourceId)
+    )[0];
     const initialValues = {
       id: generateUniqueId(),
       name: "",
       jobType: "",
       time: "",
       location: "",
-      leadSource: leadSourceName, // this will come from the type
+      leadSource: seletedLeadSource.shortName,
       latitude: "",
       longitude: "",
       address: "",
@@ -262,15 +322,13 @@ export default function AutoEntryForm({ onUpload }) {
 
     let results;
 
-    if (type === 1) {
+    if (leadSourceId === AUTO_LEAD_GEN_TYPES.OFI) {
       results = parseLeadTypeOfir(trimmedInput, initialValues); //OFIR [geocode added]
-    } else if (type === 2) {
+    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.MIK) {
       results = parseLeadTypeMikey(trimmedInput, initialValues); //MIKEY [geocode added]
-    } else if (type === 3) {
-      console.log("not implemented");
-    } else if (type === 4) {
+    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.CJC) {
       results = parseLeadTypeCjc(trimmedInput, initialValues); //CJC [geocode added]
-    } else if (type === 5) {
+    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.VPPC) {
       results = await parseLeadTypeVicMarket(trimmedInput, initialValues); //Victor's Marketing [geocode added]
     }
 
@@ -278,118 +336,132 @@ export default function AutoEntryForm({ onUpload }) {
     return results;
   };
   const handleLeadsUpload = async (values) => {
-    const leadGenSourceId = Number(values.leadSource);
+    const leadSourceId = Number(values.leadSource);
     const arrayOfLeads = values.leads;
 
     let results = [];
 
     for (let index = 0; index < arrayOfLeads.length; index++) {
       const element = arrayOfLeads[index];
-      const parsedLead = await parseLeadByType(element.text, leadGenSourceId);
+      const parsedLead = await parseLeadByType(element.text, leadSourceId);
       results.push(parsedLead);
     }
-    onUpload(results);
+
+    setCurrentLeads((prevState) => {
+      let ns = [...prevState, ...results];
+      return ns;
+    });
   };
 
   return (
     <Container>
       <h1 className="text-center mt-4">Auto Entry</h1>
-      <Formik
-        initialValues={INITIAL_VALUES}
-        onSubmit={handleLeadsUpload}
-        enableReinitialize={true}
-        validationSchema={autoEntrySchema}
-      >
-        {({ values, handleReset }) => (
-          <FormikForm className="border p-4 mt-5 mb-5 bg-light">
-            <Row className="lead-source-select-row mb-3">
-              {/* SELECT / UPLOAD / RESET */}
-              <Col className="d-flex gap-2">
-                <div className="w-50">
-                  <Field className="form-control" as="select" name="leadSource">
-                    {LEAD_TYPES.map(mapLeadGenOptions)}
-                  </Field>{" "}
-                  <div className="error-text">
-                    <ErrorMessage
+      <div className="d-flex justify-content-center">
+        <Formik
+          initialValues={INITIAL_VALUES}
+          onSubmit={handleLeadsUpload}
+          enableReinitialize={true}
+          validationSchema={autoEntrySchema}
+        >
+          {({ values, handleReset }) => (
+            <FormikForm
+              className="border p-4 mt-5 mb-5 bg-light"
+              style={{ width: "100%", maxWidth: 800 }}
+            >
+              <Row className="lead-source-select-row mb-3">
+                {/* SELECT / UPLOAD / RESET */}
+                <Col className="d-flex">
+                  <div className="w-100">
+                    <Field
+                      className="form-control"
+                      as="select"
                       name="leadSource"
-                      component="div"
-                      className="field-error "
-                    ></ErrorMessage>
+                    >
+                      <option value={0}> Select an option</option>
+                      {leadSourceOptions.map(mapLeadGenOptions)}
+                    </Field>{" "}
+                    <div className="error-text">
+                      <ErrorMessage
+                        name="leadSource"
+                        component="div"
+                        className="field-error "
+                      ></ErrorMessage>
+                    </div>
                   </div>
-                </div>
-              </Col>
-              <Col className="d-flex gap-2">
-                <div className="w-100">
-                  <Button className="w-100" variant="success" type="submit">
-                    Upload
-                  </Button>
-                </div>
-                <div className="w-100">
-                  <Button
-                    className="w-100"
-                    type="button"
-                    variant="outline-secondary"
-                    onClick={handleReset}
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </Col>
-            </Row>
-            <Row className="lead-input-row mb-3">
-              <Col>
-                <FieldArray name="leads">
-                  {({ remove, push }) => (
-                    <div>
-                      {" "}
-                      <Button
-                        type="button"
-                        variant="primary"
-                        className="mb-3 py-3 w-100"
-                        onClick={() => push({ text: "" })}
-                      >
-                        Add New Lead
-                      </Button>
-                      {values.leads.length > 0 &&
-                        values.leads.map((lead, index) => (
-                          <div className="row" key={index}>
-                            <div className="col mb-2">
-                              <div className="form-group">
-                                <Field
-                                  className="form-control"
-                                  as="textarea"
-                                  name={`leads.${index}.text`}
-                                  placeholder="Enter a lead here"
-                                />
-                              </div>{" "}
-                              <div className="error-text">
-                                {" "}
-                                <ErrorMessage
-                                  name={`leads.${index}.text`}
-                                  component="div"
-                                  className="field-error"
-                                />
+                </Col>
+                <Col className="d-flex gap-2">
+                  <div className="w-100">
+                    <Button className="w-100" variant="success" type="submit">
+                      Upload
+                    </Button>
+                  </div>
+                  <div className="w-100">
+                    <Button
+                      className="w-100"
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={handleReset}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </Col>
+              </Row>
+              <Row className="lead-input-row mb-3">
+                <Col>
+                  <FieldArray name="leads">
+                    {({ remove, push }) => (
+                      <div>
+                        {" "}
+                        <Button
+                          type="button"
+                          variant="primary"
+                          className="mb-3 py-3 w-100"
+                          onClick={() => push({ text: "" })}
+                        >
+                          Add New Lead
+                        </Button>
+                        {values.leads.length > 0 &&
+                          values.leads.map((lead, index) => (
+                            <div className="row" key={index}>
+                              <div className="col mb-2">
+                                <div className="form-group">
+                                  <Field
+                                    className="form-control"
+                                    as="textarea"
+                                    name={`leads.${index}.text`}
+                                    placeholder="Enter a lead here"
+                                  />
+                                </div>{" "}
+                                <div className="error-text">
+                                  {" "}
+                                  <ErrorMessage
+                                    name={`leads.${index}.text`}
+                                    component="div"
+                                    className="field-error"
+                                  />
+                                </div>
+                              </div>
+                              <div className="col-2 text-center">
+                                <Button
+                                  type="button"
+                                  variant="outline-danger"
+                                  onClick={() => remove(index)}
+                                >
+                                  X
+                                </Button>
                               </div>
                             </div>
-                            <div className="col-1 text-center">
-                              <Button
-                                type="button"
-                                variant="outline-danger"
-                                onClick={() => remove(index)}
-                              >
-                                X
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </FieldArray>
-              </Col>
-            </Row>
-          </FormikForm>
-        )}
-      </Formik>
+                          ))}
+                      </div>
+                    )}
+                  </FieldArray>
+                </Col>
+              </Row>
+            </FormikForm>
+          )}
+        </Formik>
+      </div>
     </Container>
   );
 }

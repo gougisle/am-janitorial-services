@@ -1,29 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Button } from "react-bootstrap";
 import Spinner from "react-bootstrap/Spinner";
 import toastr from "toastr";
-import { getLeadsFromStorage } from "../utils/utilityFunctions";
+import { LeadStoreContext } from "../App";
 
-export default function ExportButton({ leadData, reset }) {
+export default function ExportButton() {
   const [isExporting, setIsExporting] = useState(false);
+  const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
 
-  const currentLeads = getLeadsFromStorage();
-
-  const onExportPostResponse = (res) => {
-    console.log("Exported the follwing: ", res);
+  const onExportSucces = (res) => {
+    console.log("Exported the following data: ", res);
     toastr.success(
-      "Your Google Sheets document has been updated",
+      "Your Google Sheets document has been updated.",
       "Export Successful"
     );
-    clearLeadsFromStorage();
+    setCurrentLeads([]);
     setIsExporting(false);
   };
 
-  const clearLeadsFromStorage = () => {
-    window.sessionStorage.setItem("currentLeads", "");
+  const onExportError = (err) => {
+    console.log("Export failed with the following: ", err);
+    toastr.error(
+      "Export failed due to some unexpected error.",
+      "Export Failed"
+    );
+    setIsExporting(false);
   };
 
-  const addRowsToGoogleSheetV2 = (rowsData) => {
+  const addRowsToGoogleSheet = (rowsData) => {
     fetch(process.env.REACT_APP_BEST_SHEET_API_URL, {
       method: "POST",
       mode: "cors",
@@ -32,29 +36,30 @@ export default function ExportButton({ leadData, reset }) {
       },
       body: JSON.stringify(rowsData),
     })
-      .then((r) => r.json())
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error("Export failed");
+      })
       .then((data) => {
-        // The response comes here
-        onExportPostResponse(data);
-        console.log(data);
+        onExportSucces(data);
       })
       .catch((error) => {
-        // Errors are reported there
-        toastr.error("Unable to Export data", "Error");
-        console.log(error);
+        onExportError(error);
       });
   };
 
   const handleExport = () => {
     setIsExporting(true);
-    addRowsToGoogleSheetV2(currentLeads);
+    addRowsToGoogleSheet(currentLeads);
   };
 
   return (
     <>
       {" "}
       <Button
-        disabled={!currentLeads}
+        disabled={currentLeads?.length < 1}
         className="btn btn-warning w-100"
         type="button"
         onClick={handleExport}
