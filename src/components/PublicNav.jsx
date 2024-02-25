@@ -18,7 +18,6 @@ function PublicNav() {
               <NavLink href="/">Auto Entry</NavLink>
               <NavLink href="/manual">Manual Entry</NavLink>
               <NavLink href="/map">Map</NavLink>
-              <NavLink href="/">Map</NavLink>
             </Nav>
             <Nav className="justify-content-between gap-2">
               <NavItem>

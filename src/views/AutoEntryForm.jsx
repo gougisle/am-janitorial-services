@@ -13,8 +13,7 @@ import { generateUniqueId } from "../utils/utilityFunctions";
 import axios from "axios";
 import {
   LEAD_SOURCES,
-  AUTO_GEN_LEAD_SOURCE_IDS,
-  AUTO_LEAD_GEN_TYPES,
+  AUTO_GEN_LEAD_TYPES,
   SERVICES_ARRAY,
 } from "../utils/constants";
 
@@ -24,19 +23,12 @@ import {
 export default function AutoEntryForm() {
   const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
 
-  // const LEAD_TYPES = [
-  //   { id: 0, label: "Select a Lead Source" },
-  //   { id: 1, label: "OFIR" }, // V1
-  //   { id: 2, label: "MIKEY" }, //V1
-  //   { id: 4, label: "CJC" }, //V1
-  //   { id: 5, label: "Victor's Marketing" }, //V1
-  // ];
-
-  const leadSourceOptions = LEAD_SOURCES.filter((source) =>
-    AUTO_GEN_LEAD_SOURCE_IDS.includes(source.id)
+  const leadSourceOptions = LEAD_SOURCES.filter(
+    (source) =>
+      AUTO_GEN_LEAD_TYPES[source.shortName] &&
+      AUTO_GEN_LEAD_TYPES[source.shortName] === source.id
   );
 
-  //console.log("Approved auto sources: ", leadSourceOptions);
   const INITIAL_VALUES = {
     leadSource: 0,
     leads: [
@@ -74,16 +66,14 @@ export default function AutoEntryForm() {
     const addressLine = lines[3];
     const geocodeData = await getGeoCodeData(addressLine);
 
-    findService(lines[1]);
-
     resultData.name = lines[0];
-    resultData.jobType = lines[1];
+    resultData.service = findService(lines[1]);
     resultData.time = timeBlock;
     resultData.location = geocodeData.location;
     resultData.latitude = geocodeData.latitude;
     resultData.longitude = geocodeData.longitude;
     resultData.address = geocodeData.fullAddress;
-    console.log("parseLeadTypeOfir data --- ", resultData);
+    //console.log("parseLeadTypeOfir data --- ", resultData);
     return resultData;
   };
   const parseLeadTypeMikey = async (text, rawShape) => {
@@ -101,19 +91,14 @@ export default function AutoEntryForm() {
     const timeBlock = `${hourStart} - ${hourEnd}`;
 
     resultData.name = lines[0];
-    resultData.jobType = cleanJobType(lines[4]);
+    resultData.service = findService(lines[4]);
     resultData.time = timeBlock;
     resultData.location = geocodeData.location;
     resultData.latitude = geocodeData.latitude;
     resultData.longitude = geocodeData.longitude;
     resultData.address = geocodeData.fullAddress;
 
-    function cleanJobType(jobTypeStr) {
-      const pieces = jobTypeStr.split("-");
-      const trimmed = pieces[1].trim();
-      return trimmed;
-    }
-    console.log("parseLeadTypeMikey data --- ", resultData);
+    //console.log("parseLeadTypeMikey data --- ", resultData);
     return resultData;
   };
   const parseLeadTypeCjc = async (text, rawShape) => {
@@ -140,10 +125,6 @@ export default function AutoEntryForm() {
         case "Time":
           resultData.time = value;
           break;
-        case "House size":
-        case "Furnace":
-          resultData.jobType = value + " ";
-          break;
         default:
           break;
       }
@@ -156,7 +137,9 @@ export default function AutoEntryForm() {
       resultData.longitude = geocodeData.longitude;
       resultData.address = geocodeData.fullAddress;
     }
-    console.log("parseLeadTypeCjc data --- ", resultData);
+
+    resultData.service = findService(text);
+    //console.log("parseLeadTypeCjc data --- ", resultData);
     return resultData;
   };
   const parseLeadTypeVicMarket = async (text, rawShape) => {
@@ -189,22 +172,52 @@ export default function AutoEntryForm() {
     }`;
 
     resultData.name = extractedName;
-    resultData.jobType = filteredLines[5];
+    resultData.service = findService(filteredLines[5]);
     resultData.time = timeBlock;
     resultData.location = geocodeData.location;
     resultData.latitude = geocodeData.latitude;
     resultData.longitude = geocodeData.longitude;
     resultData.address = geocodeData.fullAddress;
 
-    console.log("parseLeadTypeVicMarket data --- ", resultData);
+    //console.log("parseLeadTypeVicMarket data --- ", resultData);
     return resultData;
   };
   //#endregion
 
   //#region UTILITY
+  function findService(textStr) {
+    const found = [];
+    let result;
 
-  // "getGeoCodeData" accepts an address string, makes Google geocode HTTP request, extracts LAT, LNG and Neighborhood data, then return that data
+    for (const serv of SERVICES_ARRAY) {
+      // global search for the service name within a given string
+      const serviceNameRegex = new RegExp(serv.name, "gi");
+      if (textStr.match(serviceNameRegex)) {
+        if (found.includes(serv.code)) {
+          continue;
+        } else {
+          found.push(serv.code);
+        }
+      }
+    }
 
+    if (found.length < 1) {
+      result = "Could not identify service(s), please enter manually {404}";
+    }
+    if (found.length === 1) {
+      result = found[0];
+    }
+    if (found.length > 1) {
+      result = found.join(", ");
+    }
+
+    console.log("The final result >>> ", result);
+
+    return result;
+  }
+  /* getGeoCodeData summary
+   * accepts an address string, makes request to Google Geocode API then  then returns Lat, Long and Neighborhood data,
+   */
   const getGeoCodeData = async (addressStr) => {
     let results = {};
     try {
@@ -220,7 +233,9 @@ export default function AutoEntryForm() {
 
     return results;
   };
-  // "formatGeoCodeData" will accept the data from Google Geocode HTTP request and return the lat, lng and neigborhood
+  /* formatGeoCodeData summary
+   * will accept the raw data from Google Geocode request, extract Lat, Long, and Locality data, then format that data into an object to be returned out of the parent method
+   */
   const formatGeoCodeData = (rawData) => {
     const locationData = rawData.geometry.location;
     const addressData = rawData.address_components;
@@ -248,11 +263,10 @@ export default function AutoEntryForm() {
 
     return { latitude, longitude, location, fullAddress };
   };
-
   const mapLeadGenOptions = (leadSource) => {
     return (
       <option value={leadSource.id} key={leadSource.id}>
-        {leadSource.name} - {leadSource.shortName}
+        {leadSource.shortName} - {leadSource.name}
       </option>
     );
   };
@@ -260,46 +274,18 @@ export default function AutoEntryForm() {
     return text.split("\n");
   };
 
-  const findServiceV2 = (text) => {
-    const found = [];
-
-    for (const service of SERVICES_ARRAY) {
-      const serviceNameRegex = new RegExp(service.name, "gi");
-      if (text.match(serviceNameRegex)) {
-        found.push(service);
+  function validateObject(obj) {
+    for (const key in obj) {
+      if (!obj.hasOwnProperty(key)) {
+        continue;
+      }
+      if (!obj[key]) {
+        return false; // Property has no value
       }
     }
-    return found;
-  };
+    return true; // All properties have values
+  }
 
-  const findService = (text) => {
-    //TODO need to accound for multiple cleaning tasks (i.e. "tile, rug, chimney cleaning")
-    const lowerCaseText = text.toLowerCase();
-    let serviceRequests = [];
-    let categories = new Map();
-
-    SERVICES_ARRAY.forEach((service) => {
-      const serviceCategory = service.name.split(" ")[0].toLowerCase();
-
-      if (lowerCaseText.includes(serviceCategory)) {
-        if (categories[serviceCategory]) {
-          const newItems = categories[serviceCategory];
-
-          newItems.push(service);
-          categories.set(serviceCategory, newItems);
-        } else {
-          categories[serviceCategory] = [service];
-        }
-      }
-      ////////
-      if (lowerCaseText.includes(service.name.toLowerCase())) {
-        serviceRequests.push(service.code);
-      }
-    });
-
-    console.log("serviceRequests --- ", serviceRequests);
-    console.log("categories ---", categories);
-  };
   //#endregion
 
   const parseLeadByType = async (text, leadSourceId) => {
@@ -311,29 +297,34 @@ export default function AutoEntryForm() {
     const initialValues = {
       id: generateUniqueId(),
       name: "",
-      jobType: "",
+      service: "",
       time: "",
       location: "",
       leadSource: seletedLeadSource.shortName,
       latitude: "",
       longitude: "",
       address: "",
+      errors: "",
+      input: text,
     };
 
-    let results;
+    let parsedLeadData;
 
-    if (leadSourceId === AUTO_LEAD_GEN_TYPES.OFI) {
-      results = parseLeadTypeOfir(trimmedInput, initialValues); //OFIR [geocode added]
-    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.MIK) {
-      results = parseLeadTypeMikey(trimmedInput, initialValues); //MIKEY [geocode added]
-    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.CJC) {
-      results = parseLeadTypeCjc(trimmedInput, initialValues); //CJC [geocode added]
-    } else if (leadSourceId === AUTO_LEAD_GEN_TYPES.VPPC) {
-      results = await parseLeadTypeVicMarket(trimmedInput, initialValues); //Victor's Marketing [geocode added]
+    if (leadSourceId === AUTO_GEN_LEAD_TYPES.OFI) {
+      parsedLeadData = parseLeadTypeOfir(trimmedInput, initialValues);
+    } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.MIK) {
+      parsedLeadData = parseLeadTypeMikey(trimmedInput, initialValues);
+    } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.CJC) {
+      parsedLeadData = parseLeadTypeCjc(trimmedInput, initialValues);
+    } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.VPPC) {
+      parsedLeadData = await parseLeadTypeVicMarket(
+        trimmedInput,
+        initialValues
+      );
     }
 
-    console.log("after going thru parsing methods --- ", results);
-    return results;
+    //console.log("after going thru parsing methods --- ", parsedLeadData);
+    return parsedLeadData;
   };
   const handleLeadsUpload = async (values) => {
     const leadSourceId = Number(values.leadSource);
@@ -344,6 +335,7 @@ export default function AutoEntryForm() {
     for (let index = 0; index < arrayOfLeads.length; index++) {
       const element = arrayOfLeads[index];
       const parsedLead = await parseLeadByType(element.text, leadSourceId);
+      checkforErrors(parsedLead);
       results.push(parsedLead);
     }
 
@@ -351,6 +343,22 @@ export default function AutoEntryForm() {
       let ns = [...prevState, ...results];
       return ns;
     });
+  };
+
+  const checkforErrors = (object) => {
+    const errorsCaught = [];
+    object.name = "";
+    const unknownServiceRegex = new RegExp(/\{404\}/, "gi");
+    if (object.service.match(unknownServiceRegex)) {
+      const err = "Services not found in storage";
+      errorsCaught.push(err);
+    }
+    if (!validateObject(object)) {
+      const err = `One or more properties were missing after parsing methods`;
+      errorsCaught.push(err);
+    }
+
+    object.errors = errorsCaught.join(" // ");
   };
 
   return (
