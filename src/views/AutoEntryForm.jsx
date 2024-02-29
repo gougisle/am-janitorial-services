@@ -225,6 +225,7 @@ export default function AutoEntryForm() {
       const formattedAddress = splitAddress.join("+");
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${formattedAddress}&key=${process.env.REACT_APP_GOOGLE_MAPS_PLATFORM_KEY}`;
       const response = await axios.get(url);
+      //BUG, I think that this call is failing to return data sometimes
       const data = response.data.results[0];
       results = await formatGeoCodeData(data);
     } catch (err) {
@@ -274,12 +275,17 @@ export default function AutoEntryForm() {
     return text.split("\n");
   };
 
+  //BUG, this is returning error when it should not
   function validateObject(obj) {
     for (const key in obj) {
       if (!obj.hasOwnProperty(key)) {
         continue;
       }
-      if (!obj[key]) {
+      // the 'errors' and 'input' properties must be controlled for, these should only hydrate if an error occurs
+      if (key === "errors" || key === "input") {
+        continue;
+      }
+      if (obj[key] === "") {
         return false; // Property has no value
       }
     }
@@ -305,7 +311,7 @@ export default function AutoEntryForm() {
       longitude: "",
       address: "",
       errors: "",
-      input: text,
+      input: "",
     };
 
     let parsedLeadData;
@@ -335,7 +341,14 @@ export default function AutoEntryForm() {
     for (let index = 0; index < arrayOfLeads.length; index++) {
       const element = arrayOfLeads[index];
       const parsedLead = await parseLeadByType(element.text, leadSourceId);
-      checkforErrors(parsedLead);
+
+      // If we catch any errors, then they will be added to the object along with the original text input
+      const errorsArr = checkforErrors(parsedLead);
+      if (errorsArr.length > 0) {
+        parsedLead.errors = errorsArr.join(" // ");
+        parsedLead.input = element.text;
+      }
+
       results.push(parsedLead);
     }
 
@@ -347,18 +360,19 @@ export default function AutoEntryForm() {
 
   const checkforErrors = (object) => {
     const errorsCaught = [];
-    object.name = "";
+
     const unknownServiceRegex = new RegExp(/\{404\}/, "gi");
     if (object.service.match(unknownServiceRegex)) {
       const err = "Services not found in storage";
       errorsCaught.push(err);
     }
     if (!validateObject(object)) {
-      const err = `One or more properties were missing after parsing methods`;
+      const err = `One or more properties were missing`;
       errorsCaught.push(err);
     }
 
-    object.errors = errorsCaught.join(" // ");
+    return errorsCaught;
+    //object.errors = errorsCaught.join(" // ");
   };
 
   return (

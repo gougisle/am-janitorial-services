@@ -67,7 +67,7 @@ export default function GoogleMapView() {
                   Location: <b>{data.location}</b>{" "}
                 </li>
                 <li>
-                  Service: <b>{data.jobType}</b>{" "}
+                  Service: <b>{data.service}</b>{" "}
                 </li>
                 <li>
                   Address: <b>{data.address}</b>
