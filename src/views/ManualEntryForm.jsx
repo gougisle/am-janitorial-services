@@ -4,15 +4,15 @@ import { Formik, Field, Form as FormikForm, ErrorMessage } from "formik";
 import { manualEntrySchema } from "../schemas/manualEntryShema";
 import { generateUniqueId } from "../utils/utilityFunctions";
 import AddressAutocomplete from "../components/AddressAutocomplete";
-import { SERVICES_ARRAY, LEAD_SOURCES } from "../utils/constants";
+import { CONCISE_SERVICES_ARRAY, LEAD_SOURCES } from "../utils/constants";
 import { LeadStoreContext } from "../App";
 
-export default function ManualEntryForm({ onUpload }) {
+export default function ManualEntryForm() {
   const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
   const INITIAL_VALUES = {
     id: generateUniqueId(),
     name: "",
-    jobType: "",
+    service: "",
     time: "",
     latitude: "", // hydrated indirectly via <AddressAutocomplete />
     longitude: "", // hydrated indirectly via <AddressAutocomplete />
@@ -94,17 +94,17 @@ export default function ManualEntryForm({ onUpload }) {
                   <Field
                     as="select"
                     className="form-control"
-                    id="jobType"
-                    name="jobType"
+                    id="service"
+                    name="service"
                     placeholder="ex. Carpet cleaning"
                   >
                     <option value={0}>Select an option...</option>
-                    {SERVICES_ARRAY.map(mapServiceOption)}
+                    {CONCISE_SERVICES_ARRAY.map(mapServiceOption)}
                   </Field>
 
                   <div className="error-text">
                     <ErrorMessage
-                      name="jobType"
+                      name="service"
                       component="div"
                       className="field-error "
                     />

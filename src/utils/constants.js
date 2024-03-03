@@ -1,3 +1,21 @@
+const CONCISE_SERVICES_ARRAY = [
+  { id: 1, name: "Chimney Repair", code: "CHR" },
+  { id: 2, name: "Chimney Installation", code: "CHI" },
+  { id: 3, name: "Chimney Sweep", code: "CH" },
+  { id: 4, name: "Carpet Cleaning", code: "CC" },
+  { id: 5, name: "Upholstery Cleaning", code: "UC" },
+  { id: 6, name: "Sofa Cleaning", code: "SC" },
+  { id: 7, name: "Tile Cleaning", code: "TL" },
+  { id: 8, name: "Mattress Cleaning", code: "MC" },
+  { id: 9, name: "Dryer Vent Cleaning", code: "DV" },
+  { id: 10, name: "Dryer Vent Inspection", code: "DVI" },
+  { id: 11, name: "Dryer Vent Repair", code: "DVR" },
+  { id: 12, name: "More than one item", code: "MX" },
+  { id: 13, name: "Air Duct Cleaning", code: "ADC" },
+  { id: 14, name: "Commercial", code: "COMM" },
+  { id: 15, name: "Rug Cleaning", code: "RC" },
+];
+
 const SERVICES_ARRAY = [
   { id: 1, name: "Chimney Repair", code: "CHR" },
   { id: 2, name: "Chimney Installation", code: "CHI" },
@@ -63,16 +81,6 @@ const SERVICES_ARRAY = [
   { id: 48, name: "Rug Steam", code: "RC" },
 ];
 
-/* example of a LEAD
-
-Binary search tree, build the tree
-split request into words (and have some common alternatives, like sofa/couch or mattress/bed)
-need a default case for ending nodes incase we can't find the specific service
-each node needs a check value AND 
-*/
-
-// Original LIST
-
 const LEAD_SOURCES = [
   { id: 1, name: "Victor's Marketing Services", shortName: "VPPC" },
   { id: 2, name: "Mikey", shortName: "MIK" },
@@ -98,11 +106,10 @@ const AUTO_GEN_LEAD_TYPES = {
   OFI: 3,
   CJC: 8,
 };
-/*
- * Victor's Marketing - 1
- * Mikey - 2
- * Ofir - 3
- * CJC - 8
- */
 
-export { LEAD_SOURCES, SERVICES_ARRAY, AUTO_GEN_LEAD_TYPES };
+export {
+  LEAD_SOURCES,
+  SERVICES_ARRAY,
+  CONCISE_SERVICES_ARRAY,
+  AUTO_GEN_LEAD_TYPES,
+};
