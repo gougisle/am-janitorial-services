@@ -22,6 +22,7 @@ import {
 
 export default function AutoEntryForm() {
   const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
+  false && console.log(currentLeads);
 
   const leadSourceOptions = LEAD_SOURCES.filter(
     (source) =>

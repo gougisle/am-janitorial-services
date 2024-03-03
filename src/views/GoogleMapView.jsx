@@ -20,13 +20,7 @@ export default function GoogleMapView() {
     libraries,
   });
 
-  // const fetchData = async () => {
-  //   await fetch(
-  //     `${process.env.REACT_APP_SHEETS_DB_API_URL}?cast_numbers=latitude,longitude`
-  //   )
-  //     .then((response) => response.json())
-  //     .then((data) => setMarkers(data));
-  // };
+  false && console.log(map);
 
   const fetchMapData = () => {
     fetch(`${process.env.REACT_APP_BEST_SHEET_API_URL}?_raw=1`)

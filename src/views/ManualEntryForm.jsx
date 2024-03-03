@@ -9,6 +9,7 @@ import { LeadStoreContext } from "../App";
 
 export default function ManualEntryForm() {
   const [currentLeads, setCurrentLeads] = useContext(LeadStoreContext);
+  false && console.log(currentLeads);
   const INITIAL_VALUES = {
     id: generateUniqueId(),
     name: "",
