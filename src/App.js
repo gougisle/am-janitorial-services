@@ -20,9 +20,9 @@ function App() {
           <Suspense>
             <Routes>
               <Route path="/" element={<AutoEntryForm />}></Route>
-              <Route path="manual" element={<ManualEntryForm />}></Route>
+              <Route path="/manual" element={<ManualEntryForm />}></Route>
               <Route
-                path="map"
+                path="/map"
                 element={<GoogleMapView></GoogleMapView>}
               ></Route>
             </Routes>
