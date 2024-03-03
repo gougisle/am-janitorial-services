@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Button } from "react-bootstrap";
 import { Formik, Field, Form as FormikForm, ErrorMessage } from "formik";
 import { manualEntrySchema } from "../schemas/manualEntryShema";
 import { generateUniqueId } from "../utils/utilityFunctions";
@@ -61,7 +61,7 @@ export default function ManualEntryForm() {
     <>
       <Container>
         <h1 className="text-center mt-4">Manual Entry</h1>
-        <div className="d-flex justify-content-center">
+        <div className="d-flex justify-content-center mt-4">
           <Formik
             initialValues={INITIAL_VALUES}
             enableReinitialize={true}
@@ -70,99 +70,105 @@ export default function ManualEntryForm() {
           >
             {({ handleReset }) => (
               <FormikForm
-                style={{ width: "50%" }}
-                className="border p-4 mt-5 mb-5 bg-light"
+                style={{ width: "800px" }}
+                className="border p-4 bg-light"
               >
-                <div className="input-wrapper mb-3">
-                  <label htmlFor="Name">Client Name:</label>
-                  <Field
-                    className="form-control"
-                    id="name"
-                    name="name"
-                    placeholder="ex. John Smith"
-                  />
-                  <div className="error-text">
-                    <ErrorMessage
+                <div className="d-flex flex-column gap-2">
+                  <div className="input-wrapper">
+                    <label htmlFor="Name">Client Name:</label>
+                    <Field
+                      className="form-control"
+                      id="name"
                       name="name"
-                      component="div"
-                      className="field-error "
+                      placeholder="ex. John Smith"
                     />
+                    <div className="error-text">
+                      <ErrorMessage
+                        name="name"
+                        component="div"
+                        className="field-error "
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="input-wrapper mb-3">
-                  <label htmlFor="Job_Type">Job / Service:</label>
-                  <Field
-                    as="select"
-                    className="form-control"
-                    id="service"
-                    name="service"
-                    placeholder="ex. Carpet cleaning"
-                  >
-                    <option value={0}>Select an option...</option>
-                    {CONCISE_SERVICES_ARRAY.map(mapServiceOption)}
-                  </Field>
-
-                  <div className="error-text">
-                    <ErrorMessage
+                  <div className="input-wrapper">
+                    <label htmlFor="Job_Type">Job / Service:</label>
+                    <Field
+                      as="select"
+                      className="form-control"
+                      id="service"
                       name="service"
-                      component="div"
-                      className="field-error "
-                    />
-                  </div>
-                </div>{" "}
-                <Row className="input-wrapper mb-3">
-                  <Col>
+                      placeholder="ex. Carpet cleaning"
+                    >
+                      <option value={0}>Select an option...</option>
+                      {CONCISE_SERVICES_ARRAY.map(mapServiceOption)}
+                    </Field>
+
+                    <div className="error-text">
+                      <ErrorMessage
+                        name="service"
+                        component="div"
+                        className="field-error "
+                      />
+                    </div>
+                  </div>{" "}
+                  <div className="input-wrapper">
                     <AddressAutocomplete></AddressAutocomplete>
-                  </Col>
-                </Row>
-                <div className="input-wrapper mb-3">
-                  <label htmlFor="Time">Time: </label>
-                  <Field
-                    className="form-control"
-                    id="time"
-                    name="time"
-                    placeholder="ex. 3pm-5pm"
-                  />
-                  <div className="error-text">
-                    <ErrorMessage
+                  </div>
+                  <div className="input-wrapper">
+                    <label htmlFor="Time">Time: </label>
+                    <Field
+                      className="form-control"
+                      id="time"
                       name="time"
-                      component="div"
-                      className="field-error "
+                      placeholder="ex. 3pm-5pm"
                     />
+                    <div className="error-text">
+                      <ErrorMessage
+                        name="time"
+                        component="div"
+                        className="field-error "
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="input-wrapper mb-3">
-                  <label htmlFor="Lead_Source">Lead Source: </label>
-                  <Field
-                    as="select"
-                    className="form-control"
-                    id="leadSource"
-                    name="leadSource"
-                  >
-                    <option value={0}>Select an option...</option>
-                    {LEAD_SOURCES.map(mapLeadSourceOption)}
-                    <option value={"other"}> Other</option>
-                  </Field>
-                  <div className="error-text">
-                    <ErrorMessage
+                  <div className="input-wrapper">
+                    <label htmlFor="Lead_Source">Lead Source: </label>
+                    <Field
+                      as="select"
+                      className="form-control"
+                      id="leadSource"
                       name="leadSource"
-                      component="div"
-                      className="field-error "
-                    />
+                    >
+                      <option value={0}>Select an option...</option>
+                      {LEAD_SOURCES.map(mapLeadSourceOption)}
+                      <option value={"other"}> Other</option>
+                    </Field>
+                    <div className="error-text">
+                      <ErrorMessage
+                        name="leadSource"
+                        component="div"
+                        className="field-error "
+                      />
+                    </div>
+                  </div>
+                  <div className="button-wrapper d-flex flex-row justify-content-evenly gap-1">
+                    <Button
+                      type="submit"
+                      variant="success"
+                      className="p-2 w-50"
+                    >
+                      Upload
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      className="p-2 w-50"
+                      onClick={handleReset}
+                    >
+                      {" "}
+                      Clear
+                    </Button>
                   </div>
                 </div>
-                <Button type="submit" className="btn btn-success w-25 p-2 me-3">
-                  Upload
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline-secondary"
-                  className="w-25 p-2"
-                  onClick={handleReset}
-                >
-                  {" "}
-                  Clear
-                </Button>
               </FormikForm>
             )}
           </Formik>

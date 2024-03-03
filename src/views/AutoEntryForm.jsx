@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import {
   Formik,
   Field,
@@ -378,243 +378,249 @@ export default function AutoEntryForm() {
   return (
     <Container>
       <h1 className="text-center mt-4">Auto Entry</h1>
-      <Row>
-        <Col xs={12} sm={4}>
-          <h3>Example Formatting</h3>
-          <div className="d-flex flex-column gap-1">
-            <Accordion>
-              <Accordion.Item eventKey="0">
-                <Accordion.Header>VPPC</Accordion.Header>
-                <Accordion.Body>
-                  <p>
-                    <div>Victor’s Marketing Services</div>
-                    <div>Fire Prevention Chimney Services</div>
-                  </p>
-                  <p>02/21/2024 2:00 PM</p>
-                  <p>John Smith (555)-555-5555 </p>
-                  <p>1234 Main Street Ave, Los Angeles, CA 12345, USA</p>
-                  <p>Chimney Repair - $49</p>
-                  <p>...</p>
-                  <h5>
-                    <i>Notes:</i>
-                  </h5>
-                  <ul>
-                    <li>
-                      Ensure that there is a space between lines after the first
-                      2 lines
-                    </li>
-                    <li>
-                      Remove Unit numbers before uploading, and just add them to
-                      the spreadsheet
-                    </li>
-                  </ul>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-            <Accordion>
-              <Accordion.Item eventKey="1">
-                <Accordion.Header>MIK</Accordion.Header>
-                <Accordion.Body>
-                  <div> John Smith</div>
-                  <div>(555)-555-5555</div>
-                  <div>Tue Jan 16th 2:00 PM - 4:00 PM</div>
-                  <div>1234 Main Street Ave, Los Angeles, CA 12345, USA</div>
-                  <div>$XX - Basic Cleaning Dryer Vent Cleaning</div>
-                  <p>...</p>
-                  <h5>
-                    <i>Notes:</i>
-                  </h5>
-                  <ul>
-                    <li>
-                      <b>Do Not Include Job ID line</b>
-                    </li>
-                    <li>Ensure that there is no space between lines</li>
-                    <li>
-                      Remove Unit numbers before uploading, and just add them to
-                      the spreadsheet
-                    </li>
-                  </ul>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-            <Accordion>
-              <Accordion.Item eventKey="2">
-                <Accordion.Header>OFI</Accordion.Header>
-                <Accordion.Body>
-                  <div>John</div>
-                  <div>Air Duct</div>
-                  <div>February 25, 2024, 10:00 am</div>
-                  <div>1234 Main Street Ave, Los Angeles, CA 12345, USA</div>
-                  <div>
-                    Nice Lady, Air Duct $224min, Tile $0.45, Knows of extras
-                  </div>
-                  <div>Tel:5555555555</div>
-                  <div>Confirm: s1j.co/j/CMXQWJ</div>
-                  <div>STAINLESS STEAMER</div>
-                  <div>MUST WEAR MASK</div>
-                  <div>Offer Tile, mattress, rugs & upholstery cleaning</div>
-                  <div>Reply STOP to unsubscribe</div>
-                  <p>...</p>
-                  <h5>
-                    <i>Notes:</i>
-                  </h5>
-                  <ul>
-                    <li>Ensure that there is no space between lines</li>
-                    <li>
-                      Remove unit/apartment numbers before uploading, and just
-                      add them to the spreadsheet
-                    </li>
-                  </ul>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-            <Accordion>
-              <Accordion.Item eventKey="3">
-                <Accordion.Header>CJC</Accordion.Header>
-                <Accordion.Body>
-                  <div> Name: John Smith</div>
-                  <div>Contact number: 555-555-5555</div>
-                  <div>Date: 13th February </div>
-                  <div>Time: 2-4pm</div>
-                  <div>Distance: 45min 30miles</div>
-                  <div>From: Chino hills CA </div>
-                  <div>Address: 428 W E St, Colton, CA 92324, USA</div>
-                  <div>Price: $120</div>
-                  <div>Ho use size: ___</div>
-                  <div>Furnance : Staircases Cleaning </div>
-                  <div>Comment: ---</div>
-                  <div>Agent: Areeba Khan </div>
-                  <div>Id Name: Daniel Wyatt</div>
-                  <div>120$</div>
-                  <p>...</p>
-                  <h5>
-                    <i>Notes:</i>
-                  </h5>
-                  <ul>
-                    <li>
-                      If there is not an actual property address, then will need
-                      to enter manually
-                    </li>
-                    <li>Ensure that there is no space between lines</li>
-                    <li>
-                      Remove unit/apartment numbers before uploading, and just
-                      add them to the spreadsheet
-                    </li>
-                  </ul>
-                </Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-          </div>
-        </Col>
-        <Col xs={12} sm={8}>
-          {" "}
-          <Formik
-            initialValues={INITIAL_VALUES}
-            onSubmit={handleLeadsUpload}
-            enableReinitialize={true}
-            validationSchema={autoEntrySchema}
-          >
-            {({ values, handleReset }) => (
-              <FormikForm
-                className="border p-4 mt-3 bg-light"
-                style={{ width: "100%", maxWidth: 800 }}
-              >
-                <Row className="lead-source-select-row mb-3">
-                  {/* SELECT / UPLOAD / RESET */}
-                  <Col className="d-flex">
-                    <div className="w-100">
-                      <Field
-                        className="form-control"
-                        as="select"
-                        name="leadSource"
-                      >
-                        <option value={0}> Select an option</option>
-                        {leadSourceOptions.map(mapLeadGenOptions)}
-                      </Field>{" "}
-                      <div className="error-text">
-                        <ErrorMessage
+      <div className="mt-4">
+        <Row>
+          <Col xs={12} sm={4} className="mb-3">
+            <h3>Example Formatting</h3>
+            <div className="d-flex flex-column gap-1">
+              <Accordion>
+                <Accordion.Item eventKey="0">
+                  <Accordion.Header>VPPC</Accordion.Header>
+                  <Accordion.Body>
+                    <p>
+                      <div>Victor’s Marketing Services</div>
+                      <div>Fire Prevention Chimney Services</div>
+                    </p>
+                    <p>02/21/2024 2:00 PM</p>
+                    <p>John Smith (555)-555-5555 </p>
+                    <p>1234 Main Street Ave, Los Angeles, CA 12345, USA</p>
+                    <p>Chimney Repair - $49</p>
+                    <p>...</p>
+                    <h5>
+                      <i>Notes:</i>
+                    </h5>
+                    <ul>
+                      <li>
+                        Ensure that there is a space between lines after the
+                        first 2 lines
+                      </li>
+                      <li>
+                        Remove Unit numbers before uploading, and just add them
+                        to the spreadsheet
+                      </li>
+                    </ul>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+              <Accordion>
+                <Accordion.Item eventKey="1">
+                  <Accordion.Header>MIK</Accordion.Header>
+                  <Accordion.Body>
+                    <div> John Smith</div>
+                    <div>(555)-555-5555</div>
+                    <div>Tue Jan 16th 2:00 PM - 4:00 PM</div>
+                    <div>1234 Main Street Ave, Los Angeles, CA 12345, USA</div>
+                    <div>$XX - Basic Cleaning Dryer Vent Cleaning</div>
+                    <p>...</p>
+                    <h5>
+                      <i>Notes:</i>
+                    </h5>
+                    <ul>
+                      <li>
+                        <b>Do Not Include Job ID line</b>
+                      </li>
+                      <li>Ensure that there is no space between lines</li>
+                      <li>
+                        Remove Unit numbers before uploading, and just add them
+                        to the spreadsheet
+                      </li>
+                    </ul>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+              <Accordion>
+                <Accordion.Item eventKey="2">
+                  <Accordion.Header>OFI</Accordion.Header>
+                  <Accordion.Body>
+                    <div>John</div>
+                    <div>Air Duct</div>
+                    <div>February 25, 2024, 10:00 am</div>
+                    <div>1234 Main Street Ave, Los Angeles, CA 12345, USA</div>
+                    <div>
+                      Nice Lady, Air Duct $224min, Tile $0.45, Knows of extras
+                    </div>
+                    <div>Tel:5555555555</div>
+                    <div>Confirm: s1j.co/j/CMXQWJ</div>
+                    <div>STAINLESS STEAMER</div>
+                    <div>MUST WEAR MASK</div>
+                    <div>Offer Tile, mattress, rugs & upholstery cleaning</div>
+                    <div>Reply STOP to unsubscribe</div>
+                    <p>...</p>
+                    <h5>
+                      <i>Notes:</i>
+                    </h5>
+                    <ul>
+                      <li>Ensure that there is no space between lines</li>
+                      <li>
+                        Remove unit/apartment numbers before uploading, and just
+                        add them to the spreadsheet
+                      </li>
+                    </ul>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+              <Accordion>
+                <Accordion.Item eventKey="3">
+                  <Accordion.Header>CJC</Accordion.Header>
+                  <Accordion.Body>
+                    <div> Name: John Smith</div>
+                    <div>Contact number: 555-555-5555</div>
+                    <div>Date: 13th February </div>
+                    <div>Time: 2-4pm</div>
+                    <div>Distance: 45min 30miles</div>
+                    <div>From: Chino hills CA </div>
+                    <div>Address: 428 W E St, Colton, CA 92324, USA</div>
+                    <div>Price: $120</div>
+                    <div>Ho use size: ___</div>
+                    <div>Furnance : Staircases Cleaning </div>
+                    <div>Comment: ---</div>
+                    <div>Agent: Areeba Khan </div>
+                    <div>Id Name: Daniel Wyatt</div>
+                    <div>120$</div>
+                    <p>...</p>
+                    <h5>
+                      <i>Notes:</i>
+                    </h5>
+                    <ul>
+                      <li>
+                        If there is not an actual property address, then will
+                        need to enter manually
+                      </li>
+                      <li>Ensure that there is no space between lines</li>
+                      <li>
+                        Remove unit/apartment numbers before uploading, and just
+                        add them to the spreadsheet
+                      </li>
+                    </ul>
+                  </Accordion.Body>
+                </Accordion.Item>
+              </Accordion>
+            </div>
+          </Col>
+          <Col xs={12} sm={8}>
+            {" "}
+            <Formik
+              initialValues={INITIAL_VALUES}
+              onSubmit={handleLeadsUpload}
+              enableReinitialize={true}
+              validationSchema={autoEntrySchema}
+            >
+              {({ values, handleReset }) => (
+                <FormikForm
+                  className="border p-4 bg-light"
+                  style={{ width: "100%", maxWidth: 800 }}
+                >
+                  <Row className="lead-source-select-row mb-3">
+                    {/* SELECT / UPLOAD / RESET */}
+                    <Col className="d-flex">
+                      <div className="w-100">
+                        <Field
+                          className="form-control"
+                          as="select"
                           name="leadSource"
-                          component="div"
-                          className="field-error "
-                        ></ErrorMessage>
+                        >
+                          <option value={0}> Select an option</option>
+                          {leadSourceOptions.map(mapLeadGenOptions)}
+                        </Field>{" "}
+                        <div className="error-text">
+                          <ErrorMessage
+                            name="leadSource"
+                            component="div"
+                            className="field-error "
+                          ></ErrorMessage>
+                        </div>
                       </div>
-                    </div>
-                  </Col>
-                  <Col className="d-flex gap-2">
-                    <div className="w-100">
-                      <Button className="w-100" variant="success" type="submit">
-                        Upload
-                      </Button>
-                    </div>
-                    <div className="w-100">
-                      <Button
-                        className="w-100"
-                        type="button"
-                        variant="outline-secondary"
-                        onClick={handleReset}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-                  </Col>
-                </Row>
-                <Row className="lead-input-row mb-3">
-                  <Col>
-                    <FieldArray name="leads">
-                      {({ remove, push }) => (
-                        <div>
-                          {" "}
-                          <Button
-                            type="button"
-                            variant="primary"
-                            className="mb-3 py-3 w-100"
-                            onClick={() => push({ text: "" })}
-                          >
-                            Add New Lead
-                          </Button>
-                          {values.leads.length > 0 &&
-                            values.leads.map((lead, index) => (
-                              <div className="row" key={index}>
-                                <div className="col mb-2">
-                                  <div className="form-group">
-                                    <Field
-                                      className="form-control"
-                                      as="textarea"
-                                      rows={8}
-                                      name={`leads.${index}.text`}
-                                      placeholder="Paste a lead here..."
-                                    />
-                                  </div>{" "}
-                                  <div className="error-text">
-                                    {" "}
-                                    <ErrorMessage
-                                      name={`leads.${index}.text`}
-                                      component="div"
-                                      className="field-error"
-                                    />
+                    </Col>
+                    <Col className="d-flex gap-2">
+                      <div className="w-100">
+                        <Button
+                          className="w-100"
+                          variant="success"
+                          type="submit"
+                        >
+                          Upload
+                        </Button>
+                      </div>
+                      <div className="w-100">
+                        <Button
+                          className="w-100"
+                          type="button"
+                          variant="outline-secondary"
+                          onClick={handleReset}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className="lead-input-row mb-3">
+                    <Col>
+                      <FieldArray name="leads">
+                        {({ remove, push }) => (
+                          <div>
+                            {" "}
+                            <Button
+                              type="button"
+                              variant="primary"
+                              className="mb-3 py-3 w-100"
+                              onClick={() => push({ text: "" })}
+                            >
+                              Add New Lead
+                            </Button>
+                            {values.leads.length > 0 &&
+                              values.leads.map((lead, index) => (
+                                <div className="row" key={index}>
+                                  <div className="col mb-2">
+                                    <div className="form-group">
+                                      <Field
+                                        className="form-control"
+                                        as="textarea"
+                                        rows={8}
+                                        name={`leads.${index}.text`}
+                                        placeholder="Paste a lead here..."
+                                      />
+                                    </div>{" "}
+                                    <div className="error-text">
+                                      {" "}
+                                      <ErrorMessage
+                                        name={`leads.${index}.text`}
+                                        component="div"
+                                        className="field-error"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="col-2 text-center">
+                                    <Button
+                                      type="button"
+                                      variant="outline-danger"
+                                      onClick={() => remove(index)}
+                                    >
+                                      X
+                                    </Button>
                                   </div>
                                 </div>
-                                <div className="col-2 text-center">
-                                  <Button
-                                    type="button"
-                                    variant="outline-danger"
-                                    onClick={() => remove(index)}
-                                  >
-                                    X
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </FieldArray>
-                  </Col>
-                </Row>
-              </FormikForm>
-            )}
-          </Formik>
-        </Col>
-      </Row>
+                              ))}
+                          </div>
+                        )}
+                      </FieldArray>
+                    </Col>
+                  </Row>
+                </FormikForm>
+              )}
+            </Formik>
+          </Col>
+        </Row>
+      </div>
     </Container>
   );
 }
