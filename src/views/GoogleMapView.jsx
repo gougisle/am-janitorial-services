@@ -6,7 +6,7 @@ import {
   InfoWindowF,
 } from "@react-google-maps/api";
 import { Container } from "react-bootstrap";
-//import CalculationModal from "../components/CalculationModal";
+// import CalculationModal from "../components/CalculationModal";
 
 const libraries = ["geocoding", "places", "marker"];
 const center = { lat: 34.2505334, lng: -118.548408 };
@@ -110,7 +110,7 @@ export default function GoogleMapView() {
               {markers?.map(mapMarkers)}
             </GoogleMap>
           </div>
-          {/* <CalculationModal></CalculationModal> */}
+          {/* <CalculationModal /> */}
         </div>
       </Container>
     </>

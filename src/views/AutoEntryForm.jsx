@@ -40,7 +40,7 @@ export default function AutoEntryForm() {
   };
 
   //#region PARSING METHODS
-  const parseLeadTypeOfir = async (text, rawShape) => {
+  const parseLeadTypeOFI = async (text, rawShape) => {
     let resultData = { ...rawShape };
     const lines = getSplitLines(text);
 
@@ -77,7 +77,7 @@ export default function AutoEntryForm() {
     //console.log("parseLeadTypeOfir data --- ", resultData);
     return resultData;
   };
-  const parseLeadTypeMikey = async (text, rawShape) => {
+  const parseLeadTypeMIK = async (text, rawShape) => {
     let resultData = { ...rawShape };
     const lines = getSplitLines(text);
 
@@ -86,8 +86,8 @@ export default function AutoEntryForm() {
 
     const dateTimeStr = lines[2]; // "Tue Jan 16th 2:00 PM - 4:00 PM"
     const splitDateTime = dateTimeStr.split("-"); // ["Tue Jan 16th 2:00 PM ", " 4:00 PM"]
-    const hourStart = splitDateTime[1].trim();
-    const hourEnd = splitDateTime[0].trim().substring(12);
+    const hourStart = splitDateTime[0].trim().substring(12);
+    const hourEnd = splitDateTime[1].trim();
 
     const timeBlock = `${hourStart} - ${hourEnd}`;
 
@@ -99,10 +99,10 @@ export default function AutoEntryForm() {
     resultData.longitude = geocodeData.longitude;
     resultData.address = geocodeData.fullAddress;
 
-    //console.log("parseLeadTypeMikey data --- ", resultData);
+    //console.log("parseLeadTypeMIK data --- ", resultData);
     return resultData;
   };
-  const parseLeadTypeCjc = async (text, rawShape) => {
+  const parseLeadTypeCJC = async (text, rawShape) => {
     let resultData = { ...rawShape };
     const lines = getSplitLines(text);
     let addressFromLead = "";
@@ -140,10 +140,10 @@ export default function AutoEntryForm() {
     }
 
     resultData.service = findService(text);
-    //console.log("parseLeadTypeCjc data --- ", resultData);
+    //console.log("parseLeadTypeCJC data --- ", resultData);
     return resultData;
   };
-  const parseLeadTypeVicMarket = async (text, rawShape) => {
+  const parseLeadTypeVPPC = async (text, rawShape) => {
     let resultData = { ...rawShape };
     const lines = getSplitLines(text); // splits all the lines
     const filteredLines = lines.filter((ln) => ln !== ""); //remove the empty lines
@@ -180,7 +180,7 @@ export default function AutoEntryForm() {
     resultData.longitude = geocodeData.longitude;
     resultData.address = geocodeData.fullAddress;
 
-    //console.log("parseLeadTypeVicMarket data --- ", resultData);
+    //console.log("parseLeadTypeVPPC data --- ", resultData);
     return resultData;
   };
   //#endregion
@@ -286,7 +286,7 @@ export default function AutoEntryForm() {
       if (key === "errors" || key === "input") {
         continue;
       }
-      if (obj[key] === "") {
+      if (obj[key] === undefined) {
         return false; // Property has no value
       }
     }
@@ -303,31 +303,28 @@ export default function AutoEntryForm() {
     )[0];
     const initialValues = {
       id: generateUniqueId(),
-      name: "",
-      service: "",
-      time: "",
-      location: "",
+      name: undefined,
+      service: undefined,
+      time: undefined,
+      location: undefined,
       leadSource: seletedLeadSource.shortName,
-      latitude: "",
-      longitude: "",
-      address: "",
-      errors: "",
-      input: "",
+      latitude: undefined,
+      longitude: undefined,
+      address: undefined,
+      errors: undefined,
+      input: undefined,
     };
 
     let parsedLeadData;
 
     if (leadSourceId === AUTO_GEN_LEAD_TYPES.OFI) {
-      parsedLeadData = parseLeadTypeOfir(trimmedInput, initialValues);
+      parsedLeadData = parseLeadTypeOFI(trimmedInput, initialValues);
     } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.MIK) {
-      parsedLeadData = parseLeadTypeMikey(trimmedInput, initialValues);
+      parsedLeadData = parseLeadTypeMIK(trimmedInput, initialValues);
     } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.CJC) {
-      parsedLeadData = parseLeadTypeCjc(trimmedInput, initialValues);
+      parsedLeadData = parseLeadTypeCJC(trimmedInput, initialValues);
     } else if (leadSourceId === AUTO_GEN_LEAD_TYPES.VPPC) {
-      parsedLeadData = await parseLeadTypeVicMarket(
-        trimmedInput,
-        initialValues
-      );
+      parsedLeadData = await parseLeadTypeVPPC(trimmedInput, initialValues);
     }
 
     //console.log("after going thru parsing methods --- ", parsedLeadData);
@@ -357,6 +354,7 @@ export default function AutoEntryForm() {
       let ns = [...prevState, ...results];
       return ns;
     });
+    //TODO: either clear the form following successful upload OR use toastr to inform user
   };
 
   const checkforErrors = (object) => {
@@ -364,7 +362,7 @@ export default function AutoEntryForm() {
 
     const unknownServiceRegex = new RegExp(/\{404\}/, "gi");
     if (object.service.match(unknownServiceRegex)) {
-      const err = "Services not found in storage";
+      const err = "Service(s) not found";
       errorsCaught.push(err);
     }
     if (!validateObject(object)) {
@@ -373,7 +371,6 @@ export default function AutoEntryForm() {
     }
 
     return errorsCaught;
-    //object.errors = errorsCaught.join(" // ");
   };
 
   return (
@@ -389,8 +386,12 @@ export default function AutoEntryForm() {
                   <Accordion.Header>VPPC</Accordion.Header>
                   <Accordion.Body>
                     <p>
-                      <div>Victor’s Marketing Services</div>
-                      <div>Fire Prevention Chimney Services</div>
+                      <span className="d-block">
+                        Victor’s Marketing Services
+                      </span>
+                      <span className="d-block">
+                        Fire Prevention Chimney Services
+                      </span>
                     </p>
                     <p>02/21/2024 2:00 PM</p>
                     <p>John Smith (555)-555-5555 </p>
@@ -402,12 +403,12 @@ export default function AutoEntryForm() {
                     </h5>
                     <ul>
                       <li>
-                        Ensure that there is a space between lines after the
-                        first 2 lines
+                        After the first 2 lines, ensure that there is a space
+                        between each line.
                       </li>
                       <li>
-                        Remove Unit numbers before uploading, and just add them
-                        to the spreadsheet
+                        Remove Unit/Apt. numbers before uploading; add them to
+                        the spreadsheet manually.
                       </li>
                     </ul>
                   </Accordion.Body>
@@ -428,12 +429,12 @@ export default function AutoEntryForm() {
                     </h5>
                     <ul>
                       <li>
-                        <b>Do Not Include Job ID line</b>
+                        <b>Do Not Include the "Job ID" line</b>
                       </li>
-                      <li>Ensure that there is no space between lines</li>
+                      <li>Ensure that there is no space between each line</li>
                       <li>
-                        Remove Unit numbers before uploading, and just add them
-                        to the spreadsheet
+                        Remove Unit/Apt. numbers before uploading; add them to
+                        the spreadsheet manually.
                       </li>
                     </ul>
                   </Accordion.Body>
@@ -461,10 +462,10 @@ export default function AutoEntryForm() {
                       <i>Notes:</i>
                     </h5>
                     <ul>
-                      <li>Ensure that there is no space between lines</li>
+                      <li>Ensure that there is no space between each line</li>
                       <li>
-                        Remove unit/apartment numbers before uploading, and just
-                        add them to the spreadsheet
+                        Remove Unit/Apt. numbers before uploading; add them to
+                        the spreadsheet manually.
                       </li>
                     </ul>
                   </Accordion.Body>
@@ -494,13 +495,13 @@ export default function AutoEntryForm() {
                     </h5>
                     <ul>
                       <li>
-                        If there is not an actual property address, then will
-                        need to enter manually
+                        If there is no actual property address, then this record
+                        will not show on the map.
                       </li>
-                      <li>Ensure that there is no space between lines</li>
+                      <li>Ensure that there is no space between each line</li>
                       <li>
-                        Remove unit/apartment numbers before uploading, and just
-                        add them to the spreadsheet
+                        Remove Unit/Apt. numbers before uploading; add them to
+                        the spreadsheet manually.
                       </li>
                     </ul>
                   </Accordion.Body>
