@@ -13,7 +13,7 @@ const center = { lat: 34.2505334, lng: -118.548408 };
 
 export default function GoogleMapView() {
   const [map, setMap] = useState(/** @type google.maps.Map*/ (null));
-  const [markers, setMarkers] = useState();
+  const [markers, setMarkers] = useState([]);
   const [activeMarker, setActiveMarker] = useState(null);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_PLATFORM_KEY,
@@ -23,10 +23,10 @@ export default function GoogleMapView() {
   false && console.log(map);
 
   const fetchMapData = () => {
-    fetch(`${process.env.REACT_APP_BEST_SHEET_API_URL}?_raw=1`)
+    fetch(`${process.env.REACT_APP_BEST_SHEET_API_URL}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        console.log("fetchMapData results --- ", data);
         setMarkers(data);
       })
       .catch((error) => {
@@ -36,11 +36,10 @@ export default function GoogleMapView() {
 
   const mapMarkers = (data) => {
     const markerPosition = {
-      lat: data.latitude,
-      lng: data.longitude,
+      lat: Number(data.latitude),
+      lng: Number(data.longitude),
     };
-
-    //Inside the Info Window display everything
+    //console.log("POS - - - ", markerPosition);
     return (
       <Marker
         key={`Map_Marker_${data.id}`}
@@ -49,7 +48,10 @@ export default function GoogleMapView() {
         onClick={() => setActiveMarker(data.id)}
       >
         {activeMarker === data.id ? (
-          <InfoWindowF onCloseClick={() => setActiveMarker(null)}>
+          <InfoWindowF
+            position={markerPosition}
+            onCloseClick={() => setActiveMarker(null)}
+          >
             <div>
               {" "}
               <h6>{data.name}</h6>
@@ -107,7 +109,7 @@ export default function GoogleMapView() {
               options={{ mapTypeControl: false }}
             >
               {" "}
-              {markers?.map(mapMarkers)}
+              {markers && markers.length > 0 && markers?.map(mapMarkers)}
             </GoogleMap>
           </div>
           {/* <CalculationModal /> */}
